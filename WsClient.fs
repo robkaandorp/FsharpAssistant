@@ -4,7 +4,7 @@ open System
 open System.Net.WebSockets
 open FSharp.Control.Websockets
 
-open Configuration
+open HassConfiguration
 open Model
 open Json
 
@@ -30,7 +30,7 @@ type WsClient(configuration: Configuration) =
     member this.receiveMessageAsync () =
         async {
             let (Some ws) = websocket
-            let! result = ws |> ThreadSafeWebSocket.receiveMessageAsUTF8
+            let! result = ThreadSafeWebSocket.receiveMessageAsUTF8 ws
 
             return
                 match result with

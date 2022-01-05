@@ -1,30 +1,32 @@
 ﻿open System
 open System.Net.WebSockets
-open FSharp.Control.Websockets
 
-open Configuration
+open Akka.FSharp
+
+open HassConfiguration
 open Model
-open RestClient
-open WsClient
-open Json
+open CoordinatorActor
 
 let configuration = getConfiguration()
-let restClient = RestClient configuration
-let wsClient = WsClient configuration
 
-let message = restClient.connectApiAsync |> Async.RunSynchronously
-printfn "Message: %s" message.message
+let system = System.create "fsharp-assistant" (Configuration.load())
+let _ = spawnCoordinatorActor system configuration
 
-let states = restClient.getStatesAsync |> Async.RunSynchronously
+//let restClient = RestClient configuration
+
+//let message = restClient.connectApiAsync |> Async.RunSynchronously
+//printfn "Message: %s" message.message
+
+//let states = restClient.getStatesAsync |> Async.RunSynchronously
 
 let recentlyUpdated (state: State) =
     state.last_updated > DateTime.Now.AddHours(-1)
 
-for state in Array.filter recentlyUpdated states do
-    printfn "States: %s: %s (changed %A) | # attributes = %d" state.entity_id state.state state.last_changed state.attributes.Count
+//for state in Array.filter recentlyUpdated states do
+//    printfn "States: %s: %s (changed %A) | # attributes = %d" state.entity_id state.state state.last_changed state.attributes.Count
 
-    for attribute in state.attributes do
-        printfn " - %A" attribute
+//    for attribute in state.attributes do
+//        printfn " - %A" attribute
 
 
 let messageLoop (wsClient: WsClient) =
@@ -32,7 +34,6 @@ let messageLoop (wsClient: WsClient) =
     let getMessageCounter () =
         msgCounter <- msgCounter + 1
         msgCounter
-    let send obj = toJson obj |> wsClient.sendMessageAsync
         
     async {
         while wsClient.State = WebSocketState.Open do
@@ -58,5 +59,4 @@ let messageLoop (wsClient: WsClient) =
         printfn "Message loop exited."
     }
 
-wsClient.connectAsync() |> Async.RunSynchronously
 messageLoop wsClient |> Async.RunSynchronously

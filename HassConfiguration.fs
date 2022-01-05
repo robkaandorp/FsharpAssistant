@@ -1,4 +1,4 @@
-﻿module Configuration
+﻿module HassConfiguration
 
 open System
 

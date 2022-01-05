@@ -6,15 +6,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Model.fs" />
-    <Compile Include="Configuration.fs" />
-    <Compile Include="RestClient.fs" />
     <Compile Include="Json.fs" />
+    <Compile Include="Model.fs" />
+    <Compile Include="HassConfiguration.fs" />
+    <Compile Include="RestClient.fs" />
 	<Compile Include="WsClient.fs" />
+	<Compile Include="WsActor.fs" />
+	<Compile Include="CoordinatorActor.fs" />
 	<Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Akka" Version="1.4.31" />
+    <PackageReference Include="Akka.FSharp" Version="1.4.31" />
     <PackageReference Include="FSharp.Control.Websockets" Version="0.2.2" />
   </ItemGroup>
 
