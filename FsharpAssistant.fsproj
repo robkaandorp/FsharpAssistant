@@ -6,8 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Model.fs" />
+    <Compile Include="Configuration.fs" />
+    <Compile Include="RestClient.fs" />
     <Compile Include="Json.fs" />
-    <Compile Include="Program.fs" />
+	<Compile Include="WsClient.fs" />
+	<Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
