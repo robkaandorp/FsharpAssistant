@@ -15,7 +15,7 @@ let spawnWsActor system (configuration: Configuration) protocolActorRef =
         backgroundTask {
             while wsClient.State = WebSocketState.Open do
                 let! msg = wsClient.receiveMessageAsync()
-                protocolActorRef <! msg
+                protocolActorRef <! ProtocolActor.Receive msg
         }
 
     receiverLoop() |> ignore

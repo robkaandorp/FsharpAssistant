@@ -1,5 +1,4 @@
 ﻿open System
-open System.Net.WebSockets
 
 open Akka.FSharp
 
@@ -28,9 +27,4 @@ let recentlyUpdated (state: State) =
 //    for attribute in state.attributes do
 //        printfn " - %A" attribute
 
-
-let messageLoop (wsClient: WsClient) =
-    let mutable msgCounter = 0
-    let getMessageCounter () =
-        msgCounter <- msgCounter + 1
-        msgCounter
+Console.ReadLine() |> ignore

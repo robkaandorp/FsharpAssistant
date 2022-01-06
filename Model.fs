@@ -19,10 +19,6 @@ type AuthenticationResponseMessage =
       access_token: string
       message: string }
 
-type AuthenticationRequestMessage =
-    { ``type``: string
-      access_token: string }
-
 type ErrorResponse =
     { code: string
       message: string }
@@ -32,11 +28,6 @@ type CommandResponseMessage =
       ``type``: string
       success: bool
       error: ErrorResponse }
-
-type SubscribeEvents =
-    { id: int
-      ``type``: string
-      event_type: string }
 
 type EventData =
     { entity_id: string
@@ -62,3 +53,19 @@ type Message =
     | Other of string
     | Closed of string
     | Fail of Runtime.ExceptionServices.ExceptionDispatchInfo
+
+type RequestMessage() = class end
+
+type RequestMessageWithId() =
+    inherit RequestMessage()
+    member val id = -1 with get, set
+
+type AuthenticationRequestMessage(access_token: string) =
+    inherit RequestMessage()
+    member val ``type`` = "auth" with get
+    member val access_token = access_token with get
+
+type SubscribeEvents(event_type: string) =
+    inherit RequestMessageWithId()
+    member val ``type`` = "subscribe_events" with get
+    member val event_type = event_type with get
