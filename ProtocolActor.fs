@@ -4,45 +4,67 @@ open Akka.FSharp
 
 open HassConfiguration
 open Model
+open ActorMessages
 
 type MessageDirection =
     | Send of RequestMessage
     | Receive of Message
 
-let spawnProtocolActor system (configuration: Configuration) =
+type ConnectionState =
+    | Started
+    | Stopped
+
+let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef =
     let mutable msgCounter = 0
     let getMessageCounter () =
         msgCounter <- msgCounter + 1
         msgCounter
 
-    let handleSend (msg: RequestMessage) =
+    let mutable subscribers = new Map<int, Akka.Actor.IActorRef>([])
+
+    let handleSend (mailbox: Actor<'a>) (msg: RequestMessage) =
         let wsActor = select "/user/ws-actor" system
 
-        match msg with
-        | :? RequestMessageWithId as withId ->
-            withId.id <- getMessageCounter()
-            wsActor <! withId
-        | _ -> wsActor <! msg
+        let preparedMsg: RequestMessage =
+            match msg with
+            | :? RequestMessageWithId as withId ->
+                withId.id <- getMessageCounter()
+                withId
+            | _ -> msg
+
+        match preparedMsg with
+        | :? SubscribeEvents as msg -> subscribers <- subscribers.Add(msg.id, mailbox.Sender())
+        | _ -> ()
+
+        wsActor <! preparedMsg
 
     let handleReceive msg =
         match msg with
         | AuthRequired response ->
             printfn "HA version: %s" response.ha_version
             printf "Authenticating... "
-            handleSend <| AuthenticationRequestMessage configuration.AccessToken
+            let wsActor = select "/user/ws-actor" system
+            wsActor <! AuthenticationRequestMessage configuration.AccessToken
         | AuthOk response -> 
             printfn "success."
-            handleSend <| SubscribeEvents "state_changed"
+            coordinatorActorRef <! Started
         | AuthInvalid response -> printfn "failed: %s" response.message
         | Result response -> if not response.success then printfn "Request %d failed; %s - %s" response.id response.error.code response.error.message
-        | Event response -> printfn "%s %s -> %s" response.event.data.entity_id response.event.data.old_state.state response.event.data.new_state.state
+        | Event response ->
+            match subscribers.TryFind response.id with
+            | Some subscriber -> subscriber <! StateActorMessages.State response
+            | None -> printfn "Event response for %d, but there was no subscriber" response.id
         | Other ``type`` -> printfn "Not implemented type %s" ``type``
-        | Closed reason -> printfn "Socket closed %s" reason
-        | Fail (ex) -> printfn "Receiving threw an exception %A" ex.SourceException
+        | Closed reason -> 
+            printfn "Socket closed %s" reason
+            coordinatorActorRef <! Stopped
+        | Fail (ex) -> 
+            printfn "Receiving threw an exception %A" ex.SourceException
+            coordinatorActorRef <! Stopped
 
-    let handleMessage msg =
+    let handleMessage (mailbox: Actor<'a>) msg =
         match msg with
-        | Send msg -> handleSend msg
+        | Send msg -> handleSend mailbox msg
         | Receive msg -> handleReceive msg
 
-    spawn system "protocol" (actorOf handleMessage)
+    spawn system "protocol" (actorOf2 handleMessage)

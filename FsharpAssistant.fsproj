@@ -8,11 +8,13 @@
   <ItemGroup>
     <Compile Include="Json.fs" />
     <Compile Include="Model.fs" />
+    <Compile Include="ActorMessages.fs" />
     <Compile Include="HassConfiguration.fs" />
     <Compile Include="RestClient.fs" />
 	<Compile Include="WsClient.fs" />
 	<Compile Include="ProtocolActor.fs" />
 	<Compile Include="WsActor.fs" />
+	<Compile Include="StateActor.fs" />
 	<Compile Include="CoordinatorActor.fs" />
 	<Compile Include="Program.fs" />
   </ItemGroup>
