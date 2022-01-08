@@ -17,16 +17,16 @@ let spawnEntityActor parent (entityId: string) (eventData: EventData) =
             logDebugf mailbox "%s %s -> %s" ed.entity_id ed.old_state.state ed.new_state.state
             eventData <- ed
 
-            if entityId = "switch.aquarium_heater" then
-                if ed.old_state.state = "off" && ed.new_state.state = "on" then
-                    logInfo mailbox "Heater turned on"
+            if entityId = "light.plafond_hal" then
+                if ed.old_state.state <> "on" && ed.new_state.state = "on" then
+                    logInfo mailbox "Light turned on"
                     let protocolAref = select "/user/protocol" mailbox.Context
-                    protocolAref <! Send (CallService("switch", "turn_on", "switch.kerstboom"))
+                    protocolAref <! Send (CallService("light", "turn_on", "light.dimmer_hal"))
 
-                elif ed.old_state.state = "on" && ed.new_state.state = "off" then
-                    logInfo mailbox "Heater turned off"
+                elif ed.old_state.state <> "off" && ed.new_state.state = "off" then
+                    logInfo mailbox "Light turned off"
                     let protocolAref = select "/user/protocol" mailbox.Context
-                    protocolAref <! Send (CallService("switch", "turn_off", "switch.kerstboom"))
+                    protocolAref <! Send (CallService("light", "turn_off", "light.dimmer_hal"))
 
     logInfof parent "Spawning entity actor %s" entityId
     spawn parent ("entity-" + entityId) (actorOf2 handleMessage)
