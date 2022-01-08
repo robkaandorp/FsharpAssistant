@@ -15,9 +15,9 @@ type ResponseMessage =
     { ``type``: string }
 
 type AuthenticationResponseMessage =
-    { ha_version: string
-      access_token: string
-      message: string }
+    { ``type``: string
+      ha_version: string
+      message: string option }
 
 type ErrorResponse =
     { code: string
@@ -27,7 +27,8 @@ type CommandResponseMessage =
     { id: int
       ``type``: string
       success: bool
-      error: ErrorResponse }
+      result: Map<string, obj> option
+      error: ErrorResponse option }
 
 type EventData =
     { entity_id: string
@@ -54,18 +55,29 @@ type Message =
     | Closed of string
     | Fail of Runtime.ExceptionServices.ExceptionDispatchInfo
 
-type RequestMessage() = class end
+type RequestMessage(``type``: string) =
+    member val ``type`` = ``type`` with get
 
-type RequestMessageWithId() =
-    inherit RequestMessage()
+type RequestMessageWithId(``type``: string) =
+    inherit RequestMessage(``type``)
     member val id = -1 with get, set
 
 type AuthenticationRequestMessage(access_token: string) =
-    inherit RequestMessage()
-    member val ``type`` = "auth" with get
+    inherit RequestMessage("auth")
     member val access_token = access_token with get
 
 type SubscribeEvents(event_type: string) =
-    inherit RequestMessageWithId()
-    member val ``type`` = "subscribe_events" with get
+    inherit RequestMessageWithId("subscribe_events")
     member val event_type = event_type with get
+
+type GetServices() =
+    inherit RequestMessageWithId("get_services")
+
+type Target = { entity_id: string }
+
+type CallService(domain: string, service: string, entityId: string) =
+    inherit RequestMessageWithId("call_service")
+    member val domain = domain with get
+    member val service = service with get
+    member val service_data = Map<string, string> with get, set
+    member val target = { entity_id = entityId } with get

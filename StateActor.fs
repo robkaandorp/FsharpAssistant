@@ -1,15 +1,17 @@
 ﻿module StateActor
 
+open Akka.Actor
 open Akka.FSharp
 
 open Model
-open ActorMessages
+open type ActorMessages.StateActorMessages
 open ProtocolActor
+open EntityActor
 
 let spawnStateActor system =
-    let mutable states = Map<string, EventData> []
+    let mutable states = Map<string, IActorRef> []
 
-    let handleMessage mailbox msg =
+    let handleMessage (mailbox: Actor<'a>) msg =
         match msg with
         | Start -> 
             printfn "StateActor received Start"
@@ -17,9 +19,14 @@ let spawnStateActor system =
             protocolActerRef <! Send (SubscribeEvents "state_changed")
         | Stop -> 
             printfn "StateActor received Stop"
-            states <- Map<string, EventData> []
+            for actorRef in states.Values do
+                mailbox.Context.Stop actorRef
+            states <- Map<string, IActorRef> []
         | State eventMsg -> 
-            printfn "%s %s -> %s" eventMsg.event.data.entity_id eventMsg.event.data.old_state.state eventMsg.event.data.new_state.state
-            states <- states.Add(eventMsg.event.data.entity_id, eventMsg.event.data)
+            let eventData = eventMsg.event.data
+            if states.ContainsKey eventData.entity_id then
+                states[eventData.entity_id] <! UpdateState eventData
+            else
+                states <- states.Add(eventData.entity_id, spawnEntityActor mailbox eventMsg.event.data.entity_id eventMsg.event.data)
 
     spawn system "state" (actorOf2 handleMessage)

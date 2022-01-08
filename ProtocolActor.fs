@@ -21,6 +21,7 @@ let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef
         msgCounter
 
     let mutable subscribers = new Map<int, Akka.Actor.IActorRef>([])
+    let mutable oneTimeRequests = new Map<int, Akka.Actor.IActorRef>([])
 
     let handleSend (mailbox: Actor<'a>) (msg: RequestMessage) =
         let wsActor = select "/user/ws-actor" system
@@ -34,6 +35,7 @@ let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef
 
         match preparedMsg with
         | :? SubscribeEvents as msg -> subscribers <- subscribers.Add(msg.id, mailbox.Sender())
+        | :? GetServices as msg -> oneTimeRequests <- oneTimeRequests.Add(msg.id, mailbox.Sender())
         | _ -> ()
 
         wsActor <! preparedMsg
@@ -48,8 +50,14 @@ let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef
         | AuthOk response -> 
             printfn "success."
             coordinatorActorRef <! Started
-        | AuthInvalid response -> printfn "failed: %s" response.message
-        | Result response -> if not response.success then printfn "Request %d failed; %s - %s" response.id response.error.code response.error.message
+        | AuthInvalid response -> printfn "failed: %s" response.message.Value
+        | Result response -> 
+            if not response.success then 
+                printfn "Request %d failed; %s - %s" response.id response.error.Value.code response.error.Value.message
+
+            if oneTimeRequests.ContainsKey response.id then
+                oneTimeRequests[response.id] <! GetServiceResponse response.result.Value
+                oneTimeRequests <- oneTimeRequests.Remove response.id
         | Event response ->
             match subscribers.TryFind response.id with
             | Some subscriber -> subscriber <! StateActorMessages.State response
