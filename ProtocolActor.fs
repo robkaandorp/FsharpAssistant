@@ -20,8 +20,8 @@ let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef
         msgCounter <- msgCounter + 1
         msgCounter
 
-    let mutable subscribers = new Map<int, Akka.Actor.IActorRef>([])
-    let mutable oneTimeRequests = new Map<int, Akka.Actor.IActorRef>([])
+    let mutable subscribers = Map<int, Akka.Actor.IActorRef> []
+    let mutable oneTimeRequests = Map<int, Akka.Actor.IActorRef> []
 
     let handleSend (mailbox: Actor<'a>) (msg: RequestMessage) =
         let wsActor = select "/user/ws-actor" system

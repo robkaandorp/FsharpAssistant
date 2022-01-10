@@ -4,10 +4,20 @@ open Akka.FSharp
 
 open HassConfiguration
 open Model
+open ProtocolActor
+
+type RuleActorMessages =
+    | UpdateState of EventData
 
 let spawnRuleActor system (rule: Rule) =
-    let handleMessage mailbox msg =
-        ()
+    let rec getEntityIds (condition: Condition) =
+        match condition with
+        | And (head :: tail) -> getEntityIds head @ getEntityIds (And tail)
+        | And ([]) -> []
+        | Or (head :: tail) -> getEntityIds head @ getEntityIds (And tail)
+        | Or ([]) -> []
+        | StateChangedTo entityCondition -> [entityCondition.EntityId]
+        | StateEquals entityCondition -> [entityCondition.EntityId]
 
     let rec matchCondition (condition: Condition) (eventData: EventData) =
         match condition with
@@ -23,4 +33,20 @@ let spawnRuleActor system (rule: Rule) =
             entityCondition.EntityId = eventData.entity_id &&
             entityCondition.State = eventData.new_state.state
 
-    spawn system ("rule-" + rule.Name) (actorOf2 handleMessage)
+    let executeAction action =
+        match action with
+        | CallService callServiceAction ->
+            printfn "Executing action call service %s.%s(%s)" callServiceAction.Domain callServiceAction.Service callServiceAction.Target
+            select "/user/protocol" system
+            <! Send (CallService(callServiceAction.Domain, callServiceAction.Service, callServiceAction.Target))
+            // TODO add ServiceData to CallService
+
+    let handleMessage mailbox msg =
+        match msg with
+        | UpdateState eventData ->
+            if matchCondition rule.Condition eventData then
+                printfn "Rule '%s' matched" rule.Name
+                executeAction rule.Action
+
+    let ruleAref = spawn system ("rule-" + rule.Name.Replace(' ', '_')) (actorOf2 handleMessage)
+    (ruleAref, getEntityIds rule.Condition)

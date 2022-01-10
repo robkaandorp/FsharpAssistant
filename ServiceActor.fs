@@ -11,8 +11,8 @@ let spawnServiceActor system  =
         match msg with
         | Start ->
             printfn "ServiceActor received Start"
-            let protocolAref = select "/user/protocol" system
-            protocolAref <! Send (GetServices())
+            select "/user/protocol" system
+            <! Send (GetServices())
         | Stop ->
             printfn "ServiceActor received Stop"
         | GetServiceResponse result ->

@@ -24,9 +24,8 @@ let spawnStateActor system =
             states <- Map<string, IActorRef> []
         | State eventMsg -> 
             let eventData = eventMsg.event.data
-            if states.ContainsKey eventData.entity_id then
-                states[eventData.entity_id] <! UpdateState eventData
-            else
+            if not (states.ContainsKey eventData.entity_id) then
                 states <- states.Add(eventData.entity_id, spawnEntityStateActor mailbox eventMsg.event.data.entity_id eventMsg.event.data)
+            states[eventData.entity_id] <! UpdateState eventData
 
     spawn system "state" (actorOf2 handleMessage)
