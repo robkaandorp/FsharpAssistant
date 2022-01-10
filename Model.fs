@@ -16,7 +16,7 @@ type ResponseMessage =
 
 type AuthenticationResponseMessage =
     { ``type``: string
-      ha_version: string
+      ha_version: string option
       message: string option }
 
 type ErrorResponse =

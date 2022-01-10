@@ -3,8 +3,6 @@
 open System
 open System.IO
 
-open Yaml
-
 type EntityCondition =
     { EntityId: string
       State: string }
@@ -68,7 +66,7 @@ let loadRules () =
                     CallService ({ Domain = "light"; Service = "turn_off"; SerivceData = Map<string, string> []; Target = "light.portiek" })
                 ] }
         ]
-    File.WriteAllText("rules.yaml", toYaml rules)
+    //File.WriteAllText("rules.yaml", toYaml rules)
     rules
     
 let getConfiguration() =

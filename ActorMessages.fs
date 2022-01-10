@@ -11,3 +11,8 @@ type ServiceActorMessages =
     | Start
     | Stop
     | GetServiceResponse of Map<string, obj>
+
+type WsActorMessages =
+    | Send of obj
+    | Receive of Message
+    | Stop

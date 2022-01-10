@@ -39,15 +39,16 @@ let spawnProtocolActor (system: ActorSystem) (configuration: Configuration) coor
         | :? GetServices as msg -> oneTimeRequests <- oneTimeRequests.Add(msg.id, mailbox.Sender())
         | _ -> ()
 
-        wsActor <! preparedMsg
+        wsActor <! WsActorMessages.Send preparedMsg
 
     let handleReceive mailbox msg =
         match msg with
         | AuthRequired response ->
-            logInfof mailbox "HA version: %s" response.ha_version
+            if response.ha_version.IsSome then
+                logInfof mailbox "HA version: %s" response.ha_version.Value
             logDebug mailbox "Authenticating... "
             let wsActor = select "/user/ws-actor" system
-            wsActor <! AuthenticationRequestMessage configuration.AccessToken
+            wsActor <! WsActorMessages.Send (new AuthenticationRequestMessage(configuration.AccessToken))
         | AuthOk response -> 
             logDebug mailbox "success."
             coordinatorActorRef <! Started
