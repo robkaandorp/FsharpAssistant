@@ -15,7 +15,7 @@ let spawnCoordinatorActor (system: ActorSystem) (configuration: Configuration) =
     let stateActor = spawnStateActor system
     let serviceActor = spawnServiceActor system
 
-    let handleMessage msg =
+    let handleMessage mailbox msg =
         match msg with
         | Started -> 
             stateActor <! StateActorMessages.Start
@@ -25,11 +25,20 @@ let spawnCoordinatorActor (system: ActorSystem) (configuration: Configuration) =
             serviceActor <! ServiceActorMessages.Stop
         //| (t: Terminated) -> printfn "terminated"
 
-    let coordinatorRef = spawn system "coordinator" (actorOf handleMessage)
-    let protocolActorRef = spawnProtocolActor system configuration coordinatorRef
-    let wsActorRef = spawnWsActor system configuration protocolActorRef
-    let rulesAref = spawnRulesActor system configuration
+    let actor (mailbox: Actor<'a>) =
+        let protocolActorRef = spawnProtocolActor system configuration mailbox.Self
+        let wsActorRef = spawnWsActor system configuration protocolActorRef
+        let rulesAref = spawnRulesActor system configuration
 
-    //monitor wsActorRef coordinatorActor |> ignore
+        monitor wsActorRef mailbox |> ignore
+
+        let rec loop() = actor {
+            let! message = mailbox.Receive()
+            handleMessage mailbox message
+            return! loop()
+        }
+        loop()
+
+    let coordinatorRef = spawn system "coordinator" actor
 
     coordinatorRef
