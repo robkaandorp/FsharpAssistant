@@ -1,14 +1,14 @@
-﻿module EntityActor
+﻿module EntityStateActor
 
 open Akka.FSharp
 
 open Model
 open ProtocolActor
 
-type EntityActorMessages =
+type EntityStateActorMessages =
     | UpdateState of EventData
 
-let spawnEntityActor parent (entityId: string) (eventData: EventData) =
+let spawnEntityStateActor parent (entityId: string) (eventData: EventData) =
     let mutable eventData = eventData
 
     let handleMessage mailbox msg =
@@ -28,5 +28,5 @@ let spawnEntityActor parent (entityId: string) (eventData: EventData) =
                     let protocolAref = select "/user/protocol" mailbox.Context
                     protocolAref <! Send (CallService("light", "turn_off", "light.dimmer_hal"))
 
-    logInfof parent "Spawning entity actor %s" entityId
-    spawn parent ("entity-" + entityId) (actorOf2 handleMessage)
+    logInfof parent "Spawning entity state actor %s" entityId
+    spawn parent ("entity-state-" + entityId) (actorOf2 handleMessage)

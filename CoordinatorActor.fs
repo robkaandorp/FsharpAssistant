@@ -8,6 +8,7 @@ open WsActor
 open ProtocolActor
 open StateActor
 open ServiceActor
+open RulesActor
 
 let spawnCoordinatorActor system (configuration: Configuration) =
     let stateActor = spawnStateActor system
@@ -23,10 +24,10 @@ let spawnCoordinatorActor system (configuration: Configuration) =
             serviceActor <! ServiceActorMessages.Stop
         //| (t: Terminated) -> printfn "terminated"
 
-    let coordinatorActor = actorOf handleMessage
-    let coordinatorRef = spawn system "coordinator" coordinatorActor
+    let coordinatorRef = spawn system "coordinator" (actorOf handleMessage)
     let protocolActorRef = spawnProtocolActor system configuration coordinatorRef
     let wsActorRef = spawnWsActor system configuration protocolActorRef
+    let rulesAref = spawnRulesActor system configuration
 
     //monitor wsActorRef coordinatorActor |> ignore
 

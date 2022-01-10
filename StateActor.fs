@@ -6,7 +6,7 @@ open Akka.FSharp
 open Model
 open type ActorMessages.StateActorMessages
 open ProtocolActor
-open EntityActor
+open EntityStateActor
 
 let spawnStateActor system =
     let mutable states = Map<string, IActorRef> []
@@ -27,6 +27,6 @@ let spawnStateActor system =
             if states.ContainsKey eventData.entity_id then
                 states[eventData.entity_id] <! UpdateState eventData
             else
-                states <- states.Add(eventData.entity_id, spawnEntityActor mailbox eventMsg.event.data.entity_id eventMsg.event.data)
+                states <- states.Add(eventData.entity_id, spawnEntityStateActor mailbox eventMsg.event.data.entity_id eventMsg.event.data)
 
     spawn system "state" (actorOf2 handleMessage)

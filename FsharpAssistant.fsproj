@@ -14,7 +14,9 @@
 	<Compile Include="WsClient.fs" />
 	<Compile Include="ProtocolActor.fs" />
 	<Compile Include="WsActor.fs" />
-	<Compile Include="EntityActor.fs" />
+	<Compile Include="RuleActor.fs" />
+	<Compile Include="RulesActor.fs" />
+	<Compile Include="EntityStateActor.fs" />
 	<Compile Include="StateActor.fs" />
 	<Compile Include="ServiceActor.fs" />
 	<Compile Include="CoordinatorActor.fs" />
