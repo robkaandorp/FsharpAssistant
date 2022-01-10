@@ -14,11 +14,11 @@ let spawnStateActor system =
     let handleMessage (mailbox: Actor<'a>) msg =
         match msg with
         | Start -> 
-            printfn "StateActor received Start"
+            logInfo mailbox "StateActor received Start"
             let protocolActerRef = select "/user/protocol" system
             protocolActerRef <! Send (SubscribeEvents "state_changed")
         | Stop -> 
-            printfn "StateActor received Stop"
+            logInfo mailbox "StateActor received Stop"
             for actorRef in states.Values do
                 mailbox.Context.Stop actorRef
             states <- Map<string, IActorRef> []

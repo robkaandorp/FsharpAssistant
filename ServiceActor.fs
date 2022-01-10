@@ -7,19 +7,19 @@ open type ActorMessages.ServiceActorMessages
 open ProtocolActor
 
 let spawnServiceActor system  =
-    let handleMessage msg =
+    let handleMessage mailbox msg =
         match msg with
         | Start ->
-            printfn "ServiceActor received Start"
+            logInfo mailbox "ServiceActor received Start"
             select "/user/protocol" system
             <! Send (GetServices())
         | Stop ->
-            printfn "ServiceActor received Stop"
+            logInfo mailbox "ServiceActor received Stop"
         | GetServiceResponse result ->
-            printfn "Found service domains:"
+            logInfo mailbox "Found service domains:"
             for domain in result.Keys do
-                printfn " * %s" domain
+                logInfof mailbox " * %s" domain
 
-    let serviceAref = spawn system "service" (actorOf handleMessage)
+    let serviceAref = spawn system "service" (actorOf2 handleMessage)
 
     serviceAref

@@ -36,7 +36,7 @@ let spawnRuleActor system (rule: Rule) =
     let executeAction action =
         match action with
         | CallService callServiceAction ->
-            printfn "Executing action call service %s.%s(%s)" callServiceAction.Domain callServiceAction.Service callServiceAction.Target
+            logInfof system "Executing action CallService %s.%s(%s)" callServiceAction.Domain callServiceAction.Service callServiceAction.Target
             select "/user/protocol" system
             <! Send (CallService(callServiceAction.Domain, callServiceAction.Service, callServiceAction.Target))
             // TODO add ServiceData to CallService
@@ -45,7 +45,7 @@ let spawnRuleActor system (rule: Rule) =
         match msg with
         | UpdateState eventData ->
             if matchCondition rule.Condition eventData then
-                printfn "Rule '%s' matched" rule.Name
+                logInfof system "Rule '%s' matched" rule.Name
                 executeAction rule.Action
 
     let ruleAref = spawn system ("rule-" + rule.Name.Replace(' ', '_')) (actorOf2 handleMessage)

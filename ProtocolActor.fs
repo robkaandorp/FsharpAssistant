@@ -1,5 +1,6 @@
 ﻿module ProtocolActor
 
+open Akka.Actor
 open Akka.FSharp
 
 open HassConfiguration
@@ -14,7 +15,7 @@ type ConnectionState =
     | Started
     | Stopped
 
-let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef =
+let spawnProtocolActor (system: ActorSystem) (configuration: Configuration) coordinatorActorRef =
     let mutable msgCounter = 0
     let getMessageCounter () =
         msgCounter <- msgCounter + 1
@@ -40,20 +41,20 @@ let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef
 
         wsActor <! preparedMsg
 
-    let handleReceive msg =
+    let handleReceive mailbox msg =
         match msg with
         | AuthRequired response ->
-            printfn "HA version: %s" response.ha_version
-            printf "Authenticating... "
+            logInfof mailbox "HA version: %s" response.ha_version
+            logDebug mailbox "Authenticating... "
             let wsActor = select "/user/ws-actor" system
             wsActor <! AuthenticationRequestMessage configuration.AccessToken
         | AuthOk response -> 
-            printfn "success."
+            logDebug mailbox "success."
             coordinatorActorRef <! Started
-        | AuthInvalid response -> printfn "failed: %s" response.message.Value
+        | AuthInvalid response -> logErrorf mailbox "Authentication failed: %s" response.message.Value
         | Result response -> 
             if not response.success then 
-                printfn "Request %d failed; %s - %s" response.id response.error.Value.code response.error.Value.message
+                logWarningf mailbox "Request %d failed; %s - %s" response.id response.error.Value.code response.error.Value.message
 
             if oneTimeRequests.ContainsKey response.id then
                 oneTimeRequests[response.id] <! GetServiceResponse response.result.Value
@@ -61,18 +62,18 @@ let spawnProtocolActor system (configuration: Configuration) coordinatorActorRef
         | Event response ->
             match subscribers.TryFind response.id with
             | Some subscriber -> subscriber <! StateActorMessages.State response
-            | None -> printfn "Event response for %d, but there was no subscriber" response.id
-        | Other ``type`` -> printfn "Not implemented type %s" ``type``
+            | None -> logWarningf mailbox "Event response for %d, but there was no subscriber" response.id
+        | Other ``type`` -> logWarningf mailbox "Not implemented type %s" ``type``
         | Closed reason -> 
-            printfn "Socket closed %s" reason
+            logInfof mailbox "Socket closed %s" reason
             coordinatorActorRef <! Stopped
         | Fail (ex) -> 
-            printfn "Receiving threw an exception %A" ex.SourceException
+            logErrorf mailbox "Receiving threw an exception %A" ex.SourceException
             coordinatorActorRef <! Stopped
 
     let handleMessage (mailbox: Actor<'a>) msg =
         match msg with
         | Send msg -> handleSend mailbox msg
-        | Receive msg -> handleReceive msg
+        | Receive msg -> handleReceive mailbox msg
 
     spawn system "protocol" (actorOf2 handleMessage)

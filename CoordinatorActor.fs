@@ -1,5 +1,6 @@
 ﻿module CoordinatorActor
 
+open Akka.Actor
 open Akka.FSharp
 
 open HassConfiguration
@@ -10,7 +11,7 @@ open StateActor
 open ServiceActor
 open RulesActor
 
-let spawnCoordinatorActor system (configuration: Configuration) =
+let spawnCoordinatorActor (system: ActorSystem) (configuration: Configuration) =
     let stateActor = spawnStateActor system
     let serviceActor = spawnServiceActor system
 
