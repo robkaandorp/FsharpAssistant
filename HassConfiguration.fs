@@ -50,12 +50,19 @@ let loadRules () =
                 CallService ({ Domain = "light"; Service = "turn_off"; SerivceData = Map<string, string> []; Target = "light.dimmer_hal" })
             ] }
 
-        { Name = "Turn on light at dusk"
+        { Name = "Turn on lights at dusk"
           Condition = StateChangedTo ({ EntityId = "sun.sun"; State = "below_horizon" }) 
           Actions = 
             [
                 CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> [ ("brightness_pct", "7") ]; Target = "light.kroonluchter" })
                 CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> []; Target = "light.portiek" })
+            ] }
+        { Name = "Turn off lights at dawn"
+          Condition = StateChangedTo ({ EntityId = "sun.sun"; State = "above_horizon" }) 
+          Actions = 
+            [
+                CallService ({ Domain = "light"; Service = "turn_off"; SerivceData = Map<string, string> []; Target = "light.kroonluchter" })
+                CallService ({ Domain = "light"; Service = "turn_off"; SerivceData = Map<string, string> []; Target = "light.portiek" })
             ] }
     ]
     
