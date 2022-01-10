@@ -79,5 +79,5 @@ type CallService(domain: string, service: string, entityId: string) =
     inherit RequestMessageWithId("call_service")
     member val domain = domain with get
     member val service = service with get
-    member val service_data = Map<string, string> with get, set
+    member val service_data = Map<string, string> [] with get, set
     member val target = { entity_id = entityId } with get

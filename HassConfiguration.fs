@@ -25,7 +25,7 @@ type Action =
 type Rule =
     { Name: string
       Condition: Condition 
-      Action: Action }
+      Actions: Action list }
 
 type Configuration =
       // Home Assistant url in env var HASS_URL
@@ -39,10 +39,24 @@ let loadRules () =
     [
         { Name = "Follow light turn on"
           Condition = StateChangedTo ({ EntityId = "light.plafond_hal"; State = "on" }) 
-          Action = CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> []; Target = "light.dimmer_hal" }) }
+          Actions = 
+            [
+                CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> []; Target = "light.dimmer_hal" })
+            ] }
         { Name = "Follow light turn off"
           Condition = StateChangedTo ({ EntityId = "light.plafond_hal"; State = "off" }) 
-          Action = CallService ({ Domain = "light"; Service = "turn_off"; SerivceData = Map<string, string> []; Target = "light.dimmer_hal" }) }
+          Actions = 
+            [
+                CallService ({ Domain = "light"; Service = "turn_off"; SerivceData = Map<string, string> []; Target = "light.dimmer_hal" })
+            ] }
+
+        { Name = "Turn on light at dusk"
+          Condition = StateChangedTo ({ EntityId = "sun.sun"; State = "below_horizon" }) 
+          Actions = 
+            [
+                CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> [ ("brightness_pct", "7") ]; Target = "light.kroonluchter" })
+                CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> []; Target = "light.portiek" })
+            ] }
     ]
     
 let getConfiguration() =

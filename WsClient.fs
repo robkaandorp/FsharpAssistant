@@ -29,8 +29,7 @@ type WsClient(configuration: Configuration) =
 
     member this.receiveMessageAsync () =
         async {
-            let (Some ws) = websocket
-            let! result = ThreadSafeWebSocket.receiveMessageAsUTF8 ws
+            let! result = ThreadSafeWebSocket.receiveMessageAsUTF8 websocket.Value
 
             return
                 match result with
@@ -53,10 +52,13 @@ type WsClient(configuration: Configuration) =
 
     member this.sendMessageAsync message =
         async {
-            let (Some ws) = websocket
-            let! result = message |> ThreadSafeWebSocket.sendMessageAsUTF8 ws
+            match websocket with
+            | Some ws ->
+                let! result = message |> ThreadSafeWebSocket.sendMessageAsUTF8 ws
+                match result with
+                | Ok _ -> ignore ()
+                | Error (ex) -> printfn "Sending threw an exception %A" ex.SourceException
 
-            match result with
-            | Ok _ -> ignore ()
-            | Error (ex) -> printfn "Sending threw an exception %A" ex.SourceException
+            | None ->
+                printfn "Websocket not connected."
         }
