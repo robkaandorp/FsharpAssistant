@@ -9,11 +9,12 @@ open Model
 open Json
 
 type WsClient(configuration: Configuration) =
-    let ws = new ClientWebSocket()
     let mutable websocket: ThreadSafeWebSocket.ThreadSafeWebSocket option = None
 
     member this.State with get (): WebSocketState =
-        ws.State
+        match websocket with
+        | Some ws -> ws.State
+        | None -> WebSocketState.None
 
     member this.connectAsync () =
         async {
@@ -22,6 +23,7 @@ type WsClient(configuration: Configuration) =
             hassUri.Path <- hassUri.Path + "api/websocket"
 
             let! ct = Async.CancellationToken
+            let ws = new ClientWebSocket()
             do! ws.ConnectAsync(hassUri.Uri, ct) |> Async.AwaitTask
         
             websocket <- Some (ThreadSafeWebSocket.createFromWebSocket ws)
@@ -44,9 +46,11 @@ type WsClient(configuration: Configuration) =
                     | t -> Other t
                 | Ok (WebSocket.ReceiveUTF8Result.Closed (status, reason)) -> 
                     printfn "Socket closed %A - %s" status reason
+                    websocket <- None
                     Closed reason
                 | Error (ex) -> 
                     printfn "Receiving threw an exception %A" ex.SourceException
+                    websocket <- None
                     Fail ex
         }
 

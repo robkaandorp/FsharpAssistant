@@ -27,7 +27,7 @@ let spawnRuleActor system (rule: Rule) =
         | Or ([]) -> false
         | StateChangedTo entityCondition -> 
             entityCondition.EntityId = eventData.entity_id &&
-            entityCondition.State <> eventData.old_state.state &&
+            (eventData.old_state.IsNone || entityCondition.State <> eventData.old_state.Value.state) &&
             entityCondition.State = eventData.new_state.state
         | StateEquals entityCondition -> 
             entityCondition.EntityId = eventData.entity_id &&

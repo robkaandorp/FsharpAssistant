@@ -8,8 +8,6 @@ open HassConfiguration
 open ActorMessages
 open WsClient
 
-let mutable instanceCount = 0
-
 let spawnWsActor system (configuration: Configuration) protocolActorRef =
     let wsClient = WsClient configuration
 
@@ -24,9 +22,12 @@ let spawnWsActor system (configuration: Configuration) protocolActorRef =
                     while wsClient.State = WebSocketState.Open do
                         let! msg = wsClient.receiveMessageAsync()
                         self <! WsActorMessages.Receive msg
+                         
+                    printfn "Websocket closed. Retrying..."
+                         
+                with
+                | exc -> printfn "Websocket exception: %s. Retrying..." exc.Message
 
-                finally
-                    printfn "Websocket loop exited. Reconnecting..."
                 do! Async.Sleep 1000
         }
 

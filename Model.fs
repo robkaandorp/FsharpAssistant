@@ -33,7 +33,7 @@ type CommandResponseMessage =
 type EventData =
     { entity_id: string
       new_state: State
-      old_state: State }
+      old_state: State option }
 
 type Event =
     { data: EventData
