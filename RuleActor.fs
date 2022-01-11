@@ -28,10 +28,12 @@ let spawnRuleActor system (rule: Rule) =
         | StateChangedTo entityCondition -> 
             entityCondition.EntityId = eventData.entity_id &&
             (eventData.old_state.IsNone || entityCondition.State <> eventData.old_state.Value.state) &&
-            entityCondition.State = eventData.new_state.state
+            eventData.new_state.IsSome &&
+            entityCondition.State = eventData.new_state.Value.state
         | StateEquals entityCondition -> 
             entityCondition.EntityId = eventData.entity_id &&
-            entityCondition.State = eventData.new_state.state
+            eventData.new_state.IsSome &&
+            entityCondition.State = eventData.new_state.Value.state
 
     let executeAction action =
         match action with

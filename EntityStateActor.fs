@@ -14,9 +14,17 @@ let spawnEntityStateActor parent (entityId: string) (eventData: EventData) =
     let handleMessage mailbox msg =
         match msg with
         | UpdateState ed -> 
-            match ed.old_state with
-            | Some oldState -> logDebugf mailbox "%s %s -> %s" ed.entity_id oldState.state ed.new_state.state
-            | None -> logDebugf mailbox "%s None -> %s" ed.entity_id ed.new_state.state
+            let oldState =
+                match ed.old_state with
+                | Some s -> s.state
+                | None -> "None"
+
+            let newState =
+                match ed.new_state with
+                | Some s -> s.state
+                | None -> "None"
+
+            logDebugf mailbox "%s %s -> %s" ed.entity_id oldState newState
             
             eventData <- ed
 
