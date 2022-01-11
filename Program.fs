@@ -28,3 +28,6 @@ let recentlyUpdated (state: State) =
 //        printfn " - %A" attribute
 
 Console.ReadLine() |> ignore
+
+system.Terminate() |> Async.AwaitTask |> ignore
+printfn "Actor system terminated."

@@ -8,31 +8,32 @@ open HassConfiguration
 open ActorMessages
 open WsClient
 
+let mutable instanceCount = 0
+
 let spawnWsActor system (configuration: Configuration) protocolActorRef =
     let wsClient = WsClient configuration
-    wsClient.connectAsync() |> Async.RunSynchronously
 
-    let send obj = 
-        toJson obj |> wsClient.sendMessageAsync
+    let send obj = toJson obj |> wsClient.sendMessageAsync
+
+    let receiverLoop self =
+        backgroundTask {
+            while true do
+                try
+                    do! wsClient.connectAsync()
+
+                    while wsClient.State = WebSocketState.Open do
+                        let! msg = wsClient.receiveMessageAsync()
+                        self <! WsActorMessages.Receive msg
+
+                finally
+                    printfn "Websocket loop exited. Reconnecting..."
+                do! Async.Sleep 1000
+        }
 
     let handleMessage (mailbox: Actor<'a>) msg =
         match msg with
+        | WsActorMessages.Start -> receiverLoop mailbox.Self |> ignore
         | WsActorMessages.Send msg -> send msg |> Async.RunSynchronously
         | WsActorMessages.Receive msg -> protocolActorRef <! ProtocolActor.Receive msg
-        | WsActorMessages.Stop -> 
-            logWarningf mailbox "Websocket receiver loop exited, state was %A. Stopping WsActor." wsClient.State
-            mailbox.Context.Stop(mailbox.Self)
 
-    let wsAref = spawn system "ws-actor" (actorOf2 handleMessage)
-
-    let receiverLoop () =
-        backgroundTask {
-            while wsClient.State = WebSocketState.Open do
-                let! msg = wsClient.receiveMessageAsync()
-                wsAref <! WsActorMessages.Receive msg
-
-            wsAref <! WsActorMessages.Stop
-        }
-    receiverLoop() |> ignore
-
-    wsAref
+    spawn system "ws-actor" (actorOf2 handleMessage)
