@@ -27,7 +27,9 @@ let recentlyUpdated (state: State) =
 //    for attribute in state.attributes do
 //        printfn " - %A" attribute
 
-Console.ReadLine() |> ignore
+//Console.ReadLine() |> ignore
 
-system.Terminate() |> Async.AwaitTask |> ignore
-printfn "Actor system terminated."
+//system.Terminate() |> Async.AwaitTask |> ignore
+//printfn "Actor system terminated."
+
+system.WhenTerminated.Wait()
