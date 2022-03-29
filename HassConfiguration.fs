@@ -55,7 +55,7 @@ let loadRules () =
               Condition = StateChangedTo ({ EntityId = "sun.sun"; State = "below_horizon" }) 
               Actions = 
                 [
-                    CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> [ ("brightness_pct", "7") ]; Target = "light.kroonluchter" })
+                    CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> [ ("brightness_pct", "27") ]; Target = "light.kroonluchter" })
                     CallService ({ Domain = "light"; Service = "turn_on"; SerivceData = Map<string, string> []; Target = "light.portiek" })
                 ] }
             { Name = "Turn off lights at dawn"
